@@ -75,14 +75,13 @@ impl <T:Eq>PartialEq for Node<T>{
 pub fn new() -> Executor
 {
 	let ar;
-	unsafe
-	{
+
 	 	ar = [Node {
 			elem: def_fn as fn(),
 			next: 0,
 			prev: 0
 		}; desc::TASK_NUM];
-	}
+
 
 	/// логика добавления при пустом и 2< элементах у списка отличается.
 	/// В целях уменьшения ветвления и упрощения логики создается список с 2 пустыми связанными значениями,
@@ -94,15 +93,13 @@ pub fn new() -> Executor
 		task_pool: List {empty: def_fn as fn(), el_crate: ar},
 		cur: 2
 	};
-	unsafe
-	{
-		let chain_1 = 0;
-		let chain_2 = 1;
-		executor.task_pool.el_crate[0].next =chain_2 ;
-		executor.task_pool.el_crate[0].prev = chain_2;
-		executor.task_pool.el_crate[executor.cur].next = chain_1;
-		executor.task_pool.el_crate[executor.cur].prev = chain_1;
-	}
+
+	let chain_1 = 0;
+	let chain_2 = 1;
+	executor.task_pool.el_crate[0].next =chain_2 ;
+	executor.task_pool.el_crate[0].prev = chain_2;
+	executor.task_pool.el_crate[executor.cur].next = chain_1;
+	executor.task_pool.el_crate[executor.cur].prev = chain_1;
 	executor
 }
 
@@ -140,13 +137,8 @@ impl  <T:Eq + Copy>ExecList<T> for List<T>
 	fn pop(&mut self, id: usize)
 	{
 		self.el_crate[id].elem= self.empty;
-		unsafe
-			{
-				self.el_crate[self.el_crate[id].prev].next    = self.el_crate[id].next;
-				self.el_crate[self.el_crate[id].next].prev    = self.el_crate[id].prev;
-			}
-
-
+		self.el_crate[self.el_crate[id].prev].next    = self.el_crate[id].next;
+		self.el_crate[self.el_crate[id].next].prev    = self.el_crate[id].prev;
 	}
 
 	fn fetch(&self, id: usize) -> &T
@@ -162,20 +154,17 @@ impl <'a>Kolotilka for Executor
 	fn exec(&self, token: usize)
 	{
 		let el = self.task_pool.el_crate[token];
-		unsafe { (el.elem)(); }
+		(el.elem)();
 	}
 
 	fn set_exec_el(&mut self, mode: ActiveElSetting)
 	{
-		unsafe
+		match mode
 		{
-			match mode
-			{
-				ActiveElSetting::NEXT => {self.cur = self.task_pool.el_crate[self.cur].next;},
-				ActiveElSetting::ARBITRARY(elem_numb) => {self.cur =
-					elem_numb},
-				ActiveElSetting::PREV => {self.cur = self.task_pool.el_crate[self.cur].prev}
-			}
+			ActiveElSetting::NEXT => {self.cur = self.task_pool.el_crate[self.cur].next;},
+			ActiveElSetting::ARBITRARY(elem_numb) => {self.cur = elem_numb},
+			ActiveElSetting::PREV => {self.cur = self.task_pool.el_crate[self.cur].prev}
+
 		}
 	}
 }
@@ -191,11 +180,11 @@ impl ExecList<fn()> for Executor{
 	}
 
 	fn pop(&mut self, id: usize) {
-		self.pop(id);
+		self.task_pool.pop(id);
 	}
 
 	fn fetch(&self, id: usize) -> &fn() {
-		self.fetch(id)
+		self.task_pool.fetch(id)
 	}
 }
 
@@ -208,12 +197,8 @@ impl Executor
 		let mut el = self.task_pool.el_crate[0].next;
 		while el != 0
 		{
-			unsafe
-				{
-					(self.task_pool.el_crate[el].elem)();//((*el).elem)();
-					el = self.task_pool.el_crate[el].next;//(*el).next;
-				}
-
+			(self.task_pool.el_crate[el].elem)();//((*el).elem)();
+			el = self.task_pool.el_crate[el].next;//(*el).next;
 		}
 	}
 }
