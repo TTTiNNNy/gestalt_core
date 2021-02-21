@@ -38,11 +38,6 @@ impl  PartialEq for ContextStatus{
     }
 }
 
-enum context_int_mod
-{
-    set,
-    reset
-}
 
 pub trait ContextMethods
 {
