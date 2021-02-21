@@ -1,7 +1,7 @@
 use crate::context::{RTOS_KERNEL, ContextStatus};
 use crate::sheduler::ActiveElSetting;
 
-static mut kernel_stack: [u8;512] = [0;512];
+static mut KERNEL_STACK: [u8;512] = [0;512];
 
 
 /// структура хранения всех регистров, которые не сохраняет в стек сам камень
@@ -49,7 +49,7 @@ fn prepare_task_stack_once()
 
     unsafe
         {
-            let mut stk_addr =kernel_stack.get(kernel_stack.len()-1).unwrap()  as *const u8 as usize;
+            let mut stk_addr = KERNEL_STACK.get(KERNEL_STACK.len()-1).unwrap()  as *const u8 as usize;
             while(stk_addr % 4) != 0 {stk_addr-=1;}
             stk_addr-=64;
             asm!
@@ -86,11 +86,7 @@ pub fn change_context(el: ActiveElSetting)
                 ActiveElSetting::ARBITRARY(num) => next_el = num,
             }
             if(next_el) == 0 {next_el = RTOS_KERNEL.thread_pool.el_crate[next_el].next;}
-            let mut stk_addr =kernel_stack.get(kernel_stack.len()-1).unwrap()  as *const u8 as usize;   // Выравниваем адрес. Надо бы использовать нормальную стандартную функцию.
-
-            while(stk_addr % 4) != 0 {stk_addr-=1;}
-            stk_addr-=64;
-
+            let mut stk_addr = KERNEL_STACK.get(KERNEL_STACK.len()-1).unwrap()  as *const u8 as usize;   // Выравниваем адрес. Надо бы использовать нормальную стандартную функцию.
 
             RTOS_KERNEL.status_pool[RTOS_KERNEL.active_thread_pool[0]] = ContextStatus::Idle;   // Выключаем статус "активно" активного потока.
             RTOS_KERNEL.active_thread_pool[0] = next_el;
@@ -121,7 +117,7 @@ pub fn change_context(el: ActiveElSetting)
                 ContextStatus::Idle =>
                     {
                         RTOS_KERNEL.status_pool[next_el] = ContextStatus::Active;
-                        let mut stk_addr =kernel_stack.get(kernel_stack.len()-1).unwrap()  as *const u8 as usize;
+                        let mut stk_addr = KERNEL_STACK.get(KERNEL_STACK.len()-1).unwrap()  as *const u8 as usize;
                         while(stk_addr % 4) != 0 {stk_addr-=1;}
                         stk_addr-=64;
 
